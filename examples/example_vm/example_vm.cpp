@@ -5,53 +5,58 @@
 /// @file
 /// Example implementation of the EVMC VM interface.
 ///
-/// This VM does not do anything useful except for showing how EVMC VM API
-/// should be implemented. The implementation uses the C API directly
-/// and is done in simple C++ for readability.
+/// This VM implements a subset of EMV instructions in simplistic, incorrect and unsafe way:
+/// - memory bounds are not checked,
+/// - stack bounds are not checked,
+/// - most of the operations are done with 8-bit precision.
+/// Yet, it is capable of coping with some example EVM bytecode inputs, what is very useful
+/// in integration testing. The implementation is done in simple C++ for readability and uses
+/// pure C API and some C helpers.
 
 #include "example_vm.h"
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <evmc/evmc.h>
+#include <evmc/helpers.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-
-/// The example VM instance struct extending the evmc_vm.
-struct example_vm
+namespace example
 {
-    evmc_vm instance;  ///< The base struct.
-    int verbose;       ///< The verbosity level.
+/// The example VM instance struct extending the evmc_vm.
+struct ExampleVM : evmc_vm
+{
+    int verbose = 0;  ///< The verbosity level.
+    ExampleVM();      ///< Constructor to initialize the evmc_vm struct.
 };
 
 /// The implementation of the evmc_vm::destroy() method.
-static void destroy(evmc_vm* vm)
+static void destroy(evmc_vm* instance)
 {
-    delete (struct example_vm*)vm;
+    delete static_cast<ExampleVM*>(instance);
 }
 
 /// The example implementation of the evmc_vm::get_capabilities() method.
-static evmc_capabilities_flagset get_capabilities(struct evmc_vm* vm)
+static evmc_capabilities_flagset get_capabilities(evmc_vm* /*instance*/)
 {
-    (void)vm;
-    return EVMC_CAPABILITY_EVM1 | EVMC_CAPABILITY_EWASM;
+    return EVMC_CAPABILITY_EVM1;
 }
 
 /// Example VM options.
 ///
 /// The implementation of the evmc_vm::set_option() method.
 /// VMs are allowed to omit this method implementation.
-static enum evmc_set_option_result set_option(struct evmc_vm* instance,
+static enum evmc_set_option_result set_option(evmc_vm* instance,
                                               const char* name,
                                               const char* value)
 {
-    struct example_vm* vm = (struct example_vm*)instance;
-    if (strcmp(name, "verbose") == 0)
+    ExampleVM* vm = static_cast<ExampleVM*>(instance);
+    if (std::strcmp(name, "verbose") == 0)
     {
-        if (!value)
+        if (value == nullptr)
             return EVMC_SET_OPTION_INVALID_VALUE;
 
-        char* end = NULL;
-        long int v = strtol(value, &end, 0);
+        char* end = nullptr;
+        long int v = std::strtol(value, &end, 0);
         if (end == value)  // Parsing the value failed.
             return EVMC_SET_OPTION_INVALID_VALUE;
         if (v > 9 || v < -1)  // Not in the valid range.
@@ -63,147 +68,213 @@ static enum evmc_set_option_result set_option(struct evmc_vm* instance,
     return EVMC_SET_OPTION_INVALID_NAME;
 }
 
-/// The implementation of the evmc_result::release() method that frees
-/// the output buffer attached to the result object.
-static void free_result_output_data(const struct evmc_result* result)
+/// The Example VM stack representation.
+struct Stack
 {
-    free((uint8_t*)result->output_data);
-}
+    evmc_uint256be items[1024];       ///< The array of stack items;
+    evmc_uint256be* pointer = items;  ///< The pointer to the currently first empty stack slot.
+
+    /// Pops an item from the top of the stack.
+    evmc_uint256be pop() { return *--pointer; }
+
+    /// Pushes an item to the top of the stack.
+    void push(evmc_uint256be value) { *pointer++ = value; }
+};
+
+/// The Example VM memory representation.
+struct Memory
+{
+    size_t size = 0;          ///< The current size of the memory.
+    uint8_t data[1024] = {};  ///< The fixed-size memory buffer.
+
+    /// Stores the given value bytes in the memory at given index.
+    /// The Memory::size is updated accordingly.
+    /// The memory buffer bounds are not checked.
+    void set(size_t index, const uint8_t* value_data, size_t value_size)
+    {
+        std::memcpy(&data[index], value_data, value_size);
+        size_t new_size = index + value_size;
+        if (new_size > size)
+            size = new_size;
+    }
+};
 
 /// The example implementation of the evmc_vm::execute() method.
-static struct evmc_result execute(struct evmc_vm* instance,
-                                  const struct evmc_host_interface* host,
-                                  struct evmc_host_context* context,
-                                  enum evmc_revision rev,
-                                  const struct evmc_message* msg,
-                                  const uint8_t* code,
-                                  size_t code_size)
+static evmc_result execute(evmc_vm* instance,
+                           const evmc_host_interface* host,
+                           evmc_host_context* context,
+                           enum evmc_revision rev,
+                           const evmc_message* msg,
+                           const uint8_t* code,
+                           size_t code_size)
 {
-    evmc_result ret = {};
-    ret.status_code = EVMC_INTERNAL_ERROR;
-    if (code_size == 0)
+    ExampleVM* vm = static_cast<ExampleVM*>(instance);
+
+    if (vm->verbose > 0)
+        std::puts("execution started\n");
+
+    int64_t gas_left = msg->gas;
+    Stack stack;
+    Memory memory;
+
+    for (size_t pc = 0; pc < code_size; pc++)
     {
-        // In case of empty code return a fancy error message.
-        const char* error = rev == EVMC_BYZANTIUM ? "Welcome to Byzantium!" : "Hello Ethereum!";
-        ret.output_data = (const uint8_t*)error;
-        ret.output_size = strlen(error);
-        ret.status_code = EVMC_FAILURE;
-        ret.gas_left = msg->gas / 10;
-        ret.release = NULL;  // We don't need to release the constant messages.
-        return ret;
-    }
+        // Check remaining gas, assume each instruction costs 1.
+        gas_left -= 1;
+        if (gas_left < 0)
+            return evmc_make_result(EVMC_OUT_OF_GAS, 0, nullptr, 0);
 
-    struct example_vm* vm = (struct example_vm*)instance;
-
-    // Simulate executing by checking for some code patterns.
-    // Solidity inline assembly is used in the examples instead of EVM bytecode.
-
-    // Assembly: `{ mstore(0, address()) return(0, msize()) }`.
-    const char return_address[] = "\x30\x60\x00\x52\x59\x60\x00\xf3";
-
-    // Assembly: `{ sstore(0, add(sload(0), 1)) }`
-    const char counter[] = "\x60\x01\x60\x00\x54\x01\x60\x00\x55";
-
-    // Assembly: `{ mstore(0, number()) return(0, msize()) }`
-    const char return_block_number[] = "\x43\x60\x00\x52\x59\x60\x00\xf3";
-
-    // Assembly: `{ sstore(0, number()) mstore(0, number()) return(0, msize()) }`
-    const char save_return_block_number[] = "\x43\x60\x00\x55\x43\x60\x00\x52\x59\x60\x00\xf3";
-
-    // Assembly: PUSH(0) 6x DUP1 CALL
-    const char make_a_call[] = "\x60\x00\x80\x80\x80\x80\x80\x80\xf1";
-
-    if (msg->kind == EVMC_CREATE)
-    {
-        ret.status_code = EVMC_SUCCESS;
-        ret.gas_left = msg->gas / 10;
-        return ret;
-    }
-    else if (code_size == (sizeof(return_address) - 1) &&
-             strncmp((const char*)code, return_address, code_size) == 0)
-    {
-        static const size_t address_size = sizeof(msg->destination);
-        uint8_t* output_data = (uint8_t*)malloc(address_size);
-        if (!output_data)
+        switch (code[pc])
         {
-            // malloc failed, report internal error.
-            ret.status_code = EVMC_INTERNAL_ERROR;
-            return ret;
+        default:
+            return evmc_make_result(EVMC_UNDEFINED_INSTRUCTION, 0, nullptr, 0);
+
+        case 0x00:  // STOP
+            return evmc_make_result(EVMC_SUCCESS, gas_left, nullptr, 0);
+
+        case 0x01:  // ADD
+        {
+            uint8_t a = stack.pop().bytes[31];
+            uint8_t b = stack.pop().bytes[31];
+            uint8_t sum = static_cast<uint8_t>(a + b);
+            evmc_uint256be value = {};
+            value.bytes[31] = sum;
+            stack.push(value);
+            break;
         }
-        memcpy(output_data, &msg->destination, address_size);
-        ret.status_code = EVMC_SUCCESS;
-        ret.output_data = output_data;
-        ret.output_size = address_size;
-        ret.release = &free_result_output_data;
-        return ret;
+
+        case 0x30:  // ADDRESS
+        {
+            evmc_address address = msg->destination;
+            evmc_uint256be value = {};
+            std::memcpy(&value.bytes[12], address.bytes, sizeof(address.bytes));
+            stack.push(value);
+            break;
+        }
+
+        case 0x35:  // CALLDATALOAD
+        {
+            size_t offset = stack.pop().bytes[31];
+            evmc_uint256be value = {};
+
+            size_t copy_size = 0;
+            if (offset < msg->input_size)
+                copy_size = msg->input_size - offset;  // Partial copy.
+            if (copy_size > sizeof(value))
+                copy_size = sizeof(value);  // Full copy.
+            std::memcpy(value.bytes, &msg->input_data[offset], copy_size);
+
+            stack.push(value);
+            break;
+        }
+
+        case 0x43:  // NUMBER
+        {
+            evmc_uint256be value = {};
+            value.bytes[31] = static_cast<uint8_t>(host->get_tx_context(context).block_number);
+            stack.push(value);
+            break;
+        }
+
+        case 0x52:  // MSTORE
+        {
+            uint8_t index = stack.pop().bytes[31];
+            evmc_uint256be value = stack.pop();
+            memory.set(index, value.bytes, sizeof(value));
+            break;
+        }
+
+        case 0x54:  // SLOAD
+        {
+            evmc_uint256be index = stack.pop();
+            evmc_uint256be value = host->get_storage(context, &msg->destination, &index);
+            stack.push(value);
+            break;
+        }
+
+        case 0x55:  // SSTORE
+        {
+            evmc_uint256be index = stack.pop();
+            evmc_uint256be value = stack.pop();
+            host->set_storage(context, &msg->destination, &index, &value);
+            break;
+        }
+
+        case 0x59:  // MSIZE
+        {
+            uint8_t size_as_byte = static_cast<uint8_t>(memory.size);
+            evmc_uint256be value = {};
+            value.bytes[31] = size_as_byte;
+            stack.push(value);
+            break;
+        }
+
+        case 0x60:  // PUSH1
+        {
+            uint8_t byte = code[pc + 1];
+            pc++;
+            evmc_uint256be value = {};
+            value.bytes[31] = byte;
+            stack.push(value);
+            break;
+        }
+
+        case 0x80:  // DUP1
+        {
+            evmc_uint256be value = stack.pop();
+            stack.push(value);
+            stack.push(value);
+            break;
+        }
+
+        case 0xf1:  // CALL
+        {
+            evmc_message call_msg = {};
+            call_msg.gas = stack.pop().bytes[31];
+            evmc_uint256be a = stack.pop();
+            std::memcpy(call_msg.destination.bytes, &a.bytes[12], sizeof(call_msg.destination));
+            call_msg.value = stack.pop();
+            uint8_t call_input_offset = stack.pop().bytes[31];
+            call_msg.input_data = &memory.data[call_input_offset];
+            call_msg.input_size = stack.pop().bytes[31];
+            uint8_t call_output_offset = stack.pop().bytes[31];
+            size_t call_output_size = stack.pop().bytes[31];
+
+            evmc_result call_result = host->call(context, &call_msg);
+
+            evmc_uint256be value = {};
+            value.bytes[31] = (call_result.status_code == EVMC_SUCCESS);
+            stack.push(value);
+
+            if (call_output_size > call_result.output_size)
+                call_output_size = call_result.output_size;
+            memory.set(call_output_offset, call_result.output_data, call_output_size);
+
+            if (call_result.release != nullptr)
+                call_result.release(&call_result);
+            break;
+        }
+
+        case 0xf3:  // RETURN
+        {
+            uint8_t index = stack.pop().bytes[31];
+            uint8_t size = stack.pop().bytes[31];
+            return evmc_make_result(EVMC_SUCCESS, gas_left, &memory.data[index], size);
+        }
+
+        case 0xfd:  // REVERT
+        {
+            if (rev < EVMC_BYZANTIUM)
+                return evmc_make_result(EVMC_UNDEFINED_INSTRUCTION, 0, nullptr, 0);
+
+            uint8_t index = stack.pop().bytes[31];
+            uint8_t size = stack.pop().bytes[31];
+            return evmc_make_result(EVMC_REVERT, gas_left, &memory.data[index], size);
+        }
+        }
     }
-    else if (code_size == (sizeof(counter) - 1) &&
-             strncmp((const char*)code, counter, code_size) == 0)
-    {
-        const evmc_bytes32 key = {{0}};
-        evmc_bytes32 value = host->get_storage(context, &msg->destination, &key);
-        value.bytes[31]++;
-        host->set_storage(context, &msg->destination, &key, &value);
-        ret.status_code = EVMC_SUCCESS;
-        return ret;
-    }
-    else if (code_size == (sizeof(return_block_number) - 1) &&
-             strncmp((const char*)code, return_block_number, code_size) == 0)
-    {
-        const struct evmc_tx_context tx_context = host->get_tx_context(context);
-        const size_t output_size = 20;
 
-        uint8_t* output_data = (uint8_t*)calloc(1, output_size);
-        snprintf((char*)output_data, output_size, "%u", (unsigned)tx_context.block_number);
-        ret.status_code = EVMC_SUCCESS;
-        ret.gas_left = msg->gas / 2;
-        ret.output_data = output_data;
-        ret.output_size = output_size;
-        ret.release = &free_result_output_data;
-        return ret;
-    }
-    else if (code_size == (sizeof(save_return_block_number) - 1) &&
-             strncmp((const char*)code, save_return_block_number, code_size) == 0)
-    {
-        const struct evmc_tx_context tx_context = host->get_tx_context(context);
-        const size_t output_size = 20;
-
-        // Store block number.
-        const evmc_bytes32 key = {{0}};
-        evmc_bytes32 value = {{0}};
-        // NOTE: assume block number is <= 255
-        value.bytes[31] = (uint8_t)tx_context.block_number;
-        host->set_storage(context, &msg->destination, &key, &value);
-
-        // Return block number.
-        uint8_t* output_data = (uint8_t*)calloc(1, output_size);
-        snprintf((char*)output_data, output_size, "%u", (unsigned)tx_context.block_number);
-        ret.status_code = EVMC_SUCCESS;
-        ret.gas_left = msg->gas / 2;
-        ret.output_data = output_data;
-        ret.output_size = output_size;
-        ret.release = &free_result_output_data;
-        return ret;
-    }
-    else if (code_size == (sizeof(make_a_call) - 1) &&
-             strncmp((const char*)code, make_a_call, code_size) == 0)
-    {
-        struct evmc_message call_msg;
-        memset(&call_msg, 0, sizeof(call_msg));
-        call_msg.kind = EVMC_CALL;
-        call_msg.depth = msg->depth + 1;
-        call_msg.gas = msg->gas - (msg->gas / 64);
-        call_msg.sender = msg->destination;
-        return host->call(context, &call_msg);
-    }
-
-    ret.status_code = EVMC_FAILURE;
-    ret.gas_left = 0;
-
-    if (vm->verbose)
-        printf("Execution done.\n");
-
-    return ret;
+    return evmc_make_result(EVMC_SUCCESS, gas_left, nullptr, 0);
 }
 
 
@@ -214,17 +285,15 @@ static struct evmc_result execute(struct evmc_vm* instance,
 #endif
 /// @endcond
 
-struct evmc_vm* evmc_create_example_vm()
+ExampleVM::ExampleVM()
+  : evmc_vm{EVMC_ABI_VERSION,   "example_vm",     PROJECT_VERSION,
+            example::destroy,   example::execute, example::get_capabilities,
+            example::set_option}
+{}
+
+}  // namespace example
+
+extern "C" evmc_vm* evmc_create_example_vm()
 {
-    example_vm* vm = new example_vm{evmc_vm{
-                                        EVMC_ABI_VERSION,
-                                        "example_vm",
-                                        PROJECT_VERSION,
-                                        destroy,
-                                        execute,
-                                        get_capabilities,
-                                        set_option,
-                                    },
-                                    0};
-    return &vm->instance;
+    return new example::ExampleVM;
 }
