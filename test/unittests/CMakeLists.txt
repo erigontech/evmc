@@ -17,6 +17,7 @@ target_compile_definitions(loader-mocked PRIVATE EVMC_LOADER_MOCK=1)
 add_executable(
     evmc-unittests
     cpp_test.cpp
+    example_vm_test.cpp
     helpers_test.cpp
     instructions_test.cpp
     loader_mock.h
@@ -32,6 +33,7 @@ target_link_libraries(
     evmc::example-precompiles-vm-static
     evmc::instructions
     evmc::evmc_cpp
+    evmc::tool-utils
     GTest::gtest_main
 )
 set_target_properties(evmc-unittests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
