@@ -126,3 +126,27 @@ TEST_F(example_vm, call)
               0x0000000000000000000000000000000000000003_address);
     EXPECT_EQ(host.recorded_calls[0].input_size, 3);
 }
+
+TEST_F(example_vm, calldataload_full)
+{
+    const auto r = execute_in_example_vm(7, "600235600052596000f3", "4444000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+    EXPECT_EQ(r.status_code, EVMC_SUCCESS);
+    EXPECT_EQ(r.gas_left, 0);
+    EXPECT_EQ(r, Output("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"));
+}
+
+TEST_F(example_vm, calldataload_partial)
+{
+    const auto r = execute_in_example_vm(7, "600035600052596000f3", "aabbccdd");
+    EXPECT_EQ(r.status_code, EVMC_SUCCESS);
+    EXPECT_EQ(r.gas_left, 0);
+    EXPECT_EQ(r, Output("aabbccdd00000000000000000000000000000000000000000000000000000000"));
+}
+
+TEST_F(example_vm, calldataload_empty)
+{
+    const auto r = execute_in_example_vm(7, "600435600052596000f3", "aabbccdd");
+    EXPECT_EQ(r.status_code, EVMC_SUCCESS);
+    EXPECT_EQ(r.gas_left, 0);
+    EXPECT_EQ(r, Output("0000000000000000000000000000000000000000000000000000000000000000"));
+}

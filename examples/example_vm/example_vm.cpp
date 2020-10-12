@@ -152,6 +152,22 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
+        case 0x35:  // CALLDATALOAD
+        {
+            size_t offset = stack.pop().bytes[31];
+            evmc_uint256be value = {};
+
+            size_t copy_size = 0;
+            if (offset < msg->input_size)
+                copy_size = msg->input_size - offset;  // Partial copy.
+            if (copy_size > sizeof(value))
+                copy_size = sizeof(value);  // Full copy.
+            std::memcpy(value.bytes, &msg->input_data[offset], copy_size);
+
+            stack.push(value);
+            break;
+        }
+
         case 0x43:  // NUMBER
         {
             evmc_uint256be value = {};
