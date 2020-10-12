@@ -1,5 +1,5 @@
 // EVMC: Ethereum Client-VM Connector API.
-// Copyright 2019 The EVMC Authors.
+// Copyright 2019-2020 The EVMC Authors.
 // Licensed under the Apache License, Version 2.0.
 
 #include <CLI/CLI.hpp>
@@ -19,6 +19,7 @@ int main(int argc, const char** argv)
     evmc_message msg{};
     msg.gas = 1000000;
     auto rev = EVMC_ISTANBUL;
+    std::string input_hex;
 
     auto& run_cmd = *app.add_subcommand("run", "Execute EVM bytecode");
     run_cmd.add_option("code", code_hex, "Hex-encoded bytecode")->required();
@@ -26,6 +27,7 @@ int main(int argc, const char** argv)
     run_cmd.add_option("--gas", msg.gas, "Execution gas limit", true)
         ->check(CLI::Range(0, 1000000000));
     run_cmd.add_option("--rev", rev, "EVM revision", true);
+    run_cmd.add_option("--input", input_hex, "Hex-encoded input bytes");
 
     try
     {
@@ -40,8 +42,6 @@ int main(int argc, const char** argv)
 
         if (run_cmd)
         {
-            const auto code = from_hex(code_hex);
-
             evmc_loader_error_code ec;
             auto vm = VM{evmc_load_and_configure(vm_config.c_str(), &ec)};
             if (ec != EVMC_LOADER_SUCCESS)
@@ -55,6 +55,10 @@ int main(int argc, const char** argv)
             }
 
             MockedHost host;
+            const auto code = from_hex(code_hex);
+            const auto input = from_hex(input_hex);
+            msg.input_data = input.data();
+            msg.input_size = input.size();
 
             std::cout << "Executing on " << rev << " with " << msg.gas << " gas limit\n"
                       << "in " << vm_config << "\n";
