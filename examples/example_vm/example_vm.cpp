@@ -16,6 +16,7 @@
 #include "example_vm.h"
 #include <evmc/evmc.h>
 #include <evmc/helpers.h>
+#include <evmc/instructions.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -129,10 +130,10 @@ static evmc_result execute(evmc_vm* instance,
         default:
             return evmc_make_result(EVMC_UNDEFINED_INSTRUCTION, 0, nullptr, 0);
 
-        case 0x00:  // STOP
+        case OP_STOP:
             return evmc_make_result(EVMC_SUCCESS, gas_left, nullptr, 0);
 
-        case 0x01:  // ADD
+        case OP_ADD:
         {
             uint8_t a = stack.pop().bytes[31];
             uint8_t b = stack.pop().bytes[31];
@@ -143,7 +144,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x30:  // ADDRESS
+        case OP_ADDRESS:
         {
             evmc_address address = msg->destination;
             evmc_uint256be value = {};
@@ -152,7 +153,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x35:  // CALLDATALOAD
+        case OP_CALLDATALOAD:
         {
             size_t offset = stack.pop().bytes[31];
             evmc_uint256be value = {};
@@ -168,7 +169,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x43:  // NUMBER
+        case OP_NUMBER:
         {
             evmc_uint256be value = {};
             value.bytes[31] = static_cast<uint8_t>(host->get_tx_context(context).block_number);
@@ -176,7 +177,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x52:  // MSTORE
+        case OP_MSTORE:
         {
             uint8_t index = stack.pop().bytes[31];
             evmc_uint256be value = stack.pop();
@@ -184,7 +185,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x54:  // SLOAD
+        case OP_SLOAD:
         {
             evmc_uint256be index = stack.pop();
             evmc_uint256be value = host->get_storage(context, &msg->destination, &index);
@@ -192,7 +193,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x55:  // SSTORE
+        case OP_SSTORE:
         {
             evmc_uint256be index = stack.pop();
             evmc_uint256be value = stack.pop();
@@ -200,7 +201,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x59:  // MSIZE
+        case OP_MSIZE:
         {
             uint8_t size_as_byte = static_cast<uint8_t>(memory.size);
             evmc_uint256be value = {};
@@ -209,7 +210,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x60:  // PUSH1
+        case OP_PUSH1:
         {
             uint8_t byte = code[pc + 1];
             pc++;
@@ -219,7 +220,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0x80:  // DUP1
+        case OP_DUP1:
         {
             evmc_uint256be value = stack.pop();
             stack.push(value);
@@ -227,7 +228,7 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0xf1:  // CALL
+        case OP_CALL:
         {
             evmc_message call_msg = {};
             call_msg.gas = stack.pop().bytes[31];
@@ -255,14 +256,14 @@ static evmc_result execute(evmc_vm* instance,
             break;
         }
 
-        case 0xf3:  // RETURN
+        case OP_RETURN:
         {
             uint8_t index = stack.pop().bytes[31];
             uint8_t size = stack.pop().bytes[31];
             return evmc_make_result(EVMC_SUCCESS, gas_left, &memory.data[index], size);
         }
 
-        case 0xfd:  // REVERT
+        case OP_REVERT:
         {
             if (rev < EVMC_BYZANTIUM)
                 return evmc_make_result(EVMC_UNDEFINED_INSTRUCTION, 0, nullptr, 0);
