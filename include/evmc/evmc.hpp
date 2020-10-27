@@ -144,10 +144,13 @@ constexpr inline uint64_t fnv1a_by64(uint64_t h, uint64_t x) noexcept
 /// The "equal to" comparison operator for the evmc::address type.
 constexpr bool operator==(const address& a, const address& b) noexcept
 {
-    // TODO: Report bug in clang keeping unnecessary bswap.
+#ifdef __GNUC__
+    return __builtin_memcmp(&a.bytes[0], &b.bytes[0], 20) == 0;
+#else
     return load64be(&a.bytes[0]) == load64be(&b.bytes[0]) &&
            load64be(&a.bytes[8]) == load64be(&b.bytes[8]) &&
            load32be(&a.bytes[16]) == load32be(&b.bytes[16]);
+#endif
 }
 
 /// The "not equal to" comparison operator for the evmc::address type.
@@ -159,11 +162,15 @@ constexpr bool operator!=(const address& a, const address& b) noexcept
 /// The "less than" comparison operator for the evmc::address type.
 constexpr bool operator<(const address& a, const address& b) noexcept
 {
+#ifdef __GNUC__
+    return __builtin_memcmp(&a.bytes[0], &b.bytes[0], 20) < 0;
+#else
     return load64be(&a.bytes[0]) < load64be(&b.bytes[0]) ||
            (load64be(&a.bytes[0]) == load64be(&b.bytes[0]) &&
             (load64be(&a.bytes[8]) < load64be(&b.bytes[8]) ||
              (load64be(&a.bytes[8]) == load64be(&b.bytes[8]) &&
               load32be(&a.bytes[16]) < load32be(&b.bytes[16]))));
+#endif
 }
 
 /// The "greater than" comparison operator for the evmc::address type.
@@ -187,10 +194,14 @@ constexpr bool operator>=(const address& a, const address& b) noexcept
 /// The "equal to" comparison operator for the evmc::bytes32 type.
 constexpr bool operator==(const bytes32& a, const bytes32& b) noexcept
 {
+#ifdef __GNUC__
+    return __builtin_memcmp(&a.bytes[0], &b.bytes[0], 32) == 0;
+#else
     return load64be(&a.bytes[0]) == load64be(&b.bytes[0]) &&
            load64be(&a.bytes[8]) == load64be(&b.bytes[8]) &&
            load64be(&a.bytes[16]) == load64be(&b.bytes[16]) &&
            load64be(&a.bytes[24]) == load64be(&b.bytes[24]);
+#endif
 }
 
 /// The "not equal to" comparison operator for the evmc::bytes32 type.
@@ -202,6 +213,9 @@ constexpr bool operator!=(const bytes32& a, const bytes32& b) noexcept
 /// The "less than" comparison operator for the evmc::bytes32 type.
 constexpr bool operator<(const bytes32& a, const bytes32& b) noexcept
 {
+#ifdef __GNUC__
+    return __builtin_memcmp(&a.bytes[0], &b.bytes[0], 32) < 0;
+#else
     return load64be(&a.bytes[0]) < load64be(&b.bytes[0]) ||
            (load64be(&a.bytes[0]) == load64be(&b.bytes[0]) &&
             (load64be(&a.bytes[8]) < load64be(&b.bytes[8]) ||
@@ -209,6 +223,7 @@ constexpr bool operator<(const bytes32& a, const bytes32& b) noexcept
               (load64be(&a.bytes[16]) < load64be(&b.bytes[16]) ||
                (load64be(&a.bytes[16]) == load64be(&b.bytes[16]) &&
                 load64be(&a.bytes[24]) < load64be(&b.bytes[24]))))));
+#endif
 }
 
 /// The "greater than" comparison operator for the evmc::bytes32 type.
