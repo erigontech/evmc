@@ -174,7 +174,8 @@ public:
     /// Set the account's storage value (EVMC Host method).
     evmc_storage_status set_storage(const address& addr,
                                     const bytes32& key,
-                                    const bytes32& value) noexcept override
+                                    const bytes32& value,
+                                    bool*) noexcept override
     {
         record_account_access(addr);
         const auto it = accounts.find(addr);

@@ -251,7 +251,7 @@ evmc_result execute(evmc_vm* instance,
         {
             evmc_uint256be index = stack.pop();
             evmc_uint256be value = stack.pop();
-            host->set_storage(context, &msg->destination, &index, &value);
+            host->set_storage(context, &msg->destination, &index, &value, nullptr);
             break;
         }
 

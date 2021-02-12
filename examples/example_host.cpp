@@ -58,8 +58,9 @@ public:
         return accounts.find(addr) != accounts.end();
     }
 
-    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key, bool*) const
-        noexcept final
+    evmc::bytes32 get_storage(const evmc::address& addr,
+                              const evmc::bytes32& key,
+                              bool*) const noexcept final
     {
         const auto account_iter = accounts.find(addr);
         if (account_iter == accounts.end())
@@ -73,7 +74,8 @@ public:
 
     evmc_storage_status set_storage(const evmc::address& addr,
                                     const evmc::bytes32& key,
-                                    const evmc::bytes32& value) noexcept final
+                                    const evmc::bytes32& value,
+                                    bool*) noexcept final
     {
         auto& account = accounts[addr];
         auto prev_value = account.storage[key];

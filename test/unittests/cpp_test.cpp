@@ -22,14 +22,17 @@ class NullHost : public evmc::Host
 public:
     bool account_exists(const evmc::address&) const noexcept final { return false; }
 
-    evmc::bytes32 get_storage(const evmc::address&, const evmc::bytes32&, bool*) const noexcept final
+    evmc::bytes32 get_storage(const evmc::address&,
+                              const evmc::bytes32&,
+                              bool*) const noexcept final
     {
         return {};
     }
 
     evmc_storage_status set_storage(const evmc::address&,
                                     const evmc::bytes32&,
-                                    const evmc::bytes32&) noexcept final
+                                    const evmc::bytes32&,
+                                    bool*) noexcept final
     {
         return {};
     }
@@ -595,8 +598,8 @@ TEST(cpp, host)
     mockedHost.accounts[a].storage[{}].value.bytes[0] = 1;
     EXPECT_TRUE(host.account_exists(a));
 
-    EXPECT_EQ(host.set_storage(a, {}, v), EVMC_STORAGE_MODIFIED);
-    EXPECT_EQ(host.set_storage(a, {}, v), EVMC_STORAGE_UNCHANGED);
+    EXPECT_EQ(host.set_storage(a, {}, v, nullptr), EVMC_STORAGE_MODIFIED);
+    EXPECT_EQ(host.set_storage(a, {}, v, nullptr), EVMC_STORAGE_UNCHANGED);
     EXPECT_EQ(host.get_storage(a, {}, nullptr), v);
 
     EXPECT_TRUE(evmc::is_zero(host.get_balance(a)));

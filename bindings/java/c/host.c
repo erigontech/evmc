@@ -77,8 +77,7 @@ static bool account_exists_fn(struct evmc_host_context* context, const evmc_addr
 static evmc_bytes32 get_storage_fn(struct evmc_host_context* context,
                                    const evmc_address* address,
                                    const evmc_bytes32* key,
-                                   bool* warm_read
-                                   )
+                                   bool* warm_read)
 {
     const char java_method_name[] = "get_storage";
     const char java_method_signature[] =
@@ -113,7 +112,8 @@ static evmc_bytes32 get_storage_fn(struct evmc_host_context* context,
 static enum evmc_storage_status set_storage_fn(struct evmc_host_context* context,
                                                const evmc_address* address,
                                                const evmc_bytes32* key,
-                                               const evmc_bytes32* value)
+                                               const evmc_bytes32* value,
+                                               bool* warm_read)
 {
     const char java_method_name[] = "set_storage";
     const char java_method_signature[] = "(Lorg/ethereum/evmc/HostContext;[B[B[B)I";

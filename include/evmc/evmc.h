@@ -498,16 +498,18 @@ enum evmc_storage_status
  * VM implementations only modify storage of the account of the current execution context
  * (i.e. referenced by evmc_message::destination).
  *
- * @param context  The pointer to the Host execution context.
- * @param address  The address of the account.
- * @param key      The index of the storage entry.
- * @param value    The value to be stored.
- * @return         The effect on the storage item.
+ * @param context        The pointer to the Host execution context.
+ * @param address        The address of the account.
+ * @param key            The index of the storage entry.
+ * @param value          The value to be stored.
+ * @param[out] warm_read Whether the storage read is warm in EIP-2929 terms.
+ * @return               The effect on the storage item.
  */
 typedef enum evmc_storage_status (*evmc_set_storage_fn)(struct evmc_host_context* context,
                                                         const evmc_address* address,
                                                         const evmc_bytes32* key,
-                                                        const evmc_bytes32* value);
+                                                        const evmc_bytes32* value,
+                                                        bool* warm_read);
 
 /**
  * Get balance callback function.

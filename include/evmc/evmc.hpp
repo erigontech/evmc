@@ -425,12 +425,15 @@ public:
     virtual bool account_exists(const address& addr) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::get_storage
-    virtual bytes32 get_storage(const address& addr, const bytes32& key, bool* warm_read) const noexcept = 0;
+    virtual bytes32 get_storage(const address& addr,
+                                const bytes32& key,
+                                bool* warm_read) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::set_storage
     virtual evmc_storage_status set_storage(const address& addr,
                                             const bytes32& key,
-                                            const bytes32& value) noexcept = 0;
+                                            const bytes32& value,
+                                            bool* warm_read) noexcept = 0;
 
     /// @copydoc evmc_host_interface::get_balance
     virtual uint256be get_balance(const address& addr) const noexcept = 0;
@@ -493,16 +496,19 @@ public:
         return host->account_exists(context, &address);
     }
 
-    bytes32 get_storage(const address& address, const bytes32& key, bool* warm_read) const noexcept final
+    bytes32 get_storage(const address& address,
+                        const bytes32& key,
+                        bool* warm_read) const noexcept final
     {
         return host->get_storage(context, &address, &key, warm_read);
     }
 
     evmc_storage_status set_storage(const address& address,
                                     const bytes32& key,
-                                    const bytes32& value) noexcept final
+                                    const bytes32& value,
+                                    bool* warm_read) noexcept final
     {
-        return host->set_storage(context, &address, &key, &value);
+        return host->set_storage(context, &address, &key, &value, warm_read);
     }
 
     uint256be get_balance(const address& address) const noexcept final
@@ -745,9 +751,10 @@ inline evmc_bytes32 get_storage(evmc_host_context* h,
 inline evmc_storage_status set_storage(evmc_host_context* h,
                                        const evmc_address* addr,
                                        const evmc_bytes32* key,
-                                       const evmc_bytes32* value) noexcept
+                                       const evmc_bytes32* value,
+                                       bool* warm_read) noexcept
 {
-    return Host::from_context(h)->set_storage(*addr, *key, *value);
+    return Host::from_context(h)->set_storage(*addr, *key, *value, warm_read);
 }
 
 inline evmc_uint256be get_balance(evmc_host_context* h, const evmc_address* addr) noexcept

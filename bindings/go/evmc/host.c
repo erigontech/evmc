@@ -56,11 +56,11 @@ static inline void go_exported_functions_type_checks()
     bool_flag = accountExists(context, address);
 
     evmc_get_storage_fn get_storage_fn = NULL;
-    bytes32 = get_storage_fn(context, address, &bytes32);
+    bytes32 = get_storage_fn(context, address, &bytes32, NULL);
     bytes32 = getStorage(context, address, &bytes32);
 
     evmc_set_storage_fn set_storage_fn = NULL;
-    storage_status = set_storage_fn(context, address, &bytes32, &bytes32);
+    storage_status = set_storage_fn(context, address, &bytes32, &bytes32, NULL);
     storage_status = setStorage(context, address, &bytes32, &bytes32);
 
     evmc_get_balance_fn get_balance_fn = NULL;
