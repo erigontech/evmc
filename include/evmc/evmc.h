@@ -44,7 +44,7 @@ enum
      *
      * @see @ref versioning
      */
-    EVMC_ABI_VERSION = 7
+    EVMC_ABI_VERSION = 8
 };
 
 
@@ -437,15 +437,17 @@ typedef bool (*evmc_account_exists_fn)(struct evmc_host_context* context,
  *
  * This callback function is used by a VM to query the given account storage entry.
  *
- * @param context  The Host execution context.
- * @param address  The address of the account.
- * @param key      The index of the account's storage entry.
- * @return         The storage value at the given storage key or null bytes
- *                 if the account does not exist.
+ * @param context        The Host execution context.
+ * @param address        The address of the account.
+ * @param key            The index of the account's storage entry.
+ * @param[out] warm_read Whether the storage read is warm in EIP-2929 terms.
+ * @return               The storage value at the given storage key or null bytes
+ *                       if the account does not exist.
  */
 typedef evmc_bytes32 (*evmc_get_storage_fn)(struct evmc_host_context* context,
                                             const evmc_address* address,
-                                            const evmc_bytes32* key);
+                                            const evmc_bytes32* key,
+                                            bool* warm_read);
 
 
 /**

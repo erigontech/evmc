@@ -58,7 +58,7 @@ public:
         return accounts.find(addr) != accounts.end();
     }
 
-    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key) const
+    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key, bool*) const
         noexcept final
     {
         const auto account_iter = accounts.find(addr);

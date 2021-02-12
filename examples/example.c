@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
             printf("%02x", result.output_data[i]);
         printf("\n");
         const evmc_bytes32 storage_key = {{0}};
-        evmc_bytes32 storage_value = host->get_storage(ctx, &msg.destination, &storage_key);
+        evmc_bytes32 storage_value = host->get_storage(ctx, &msg.destination, &storage_key, NULL);
         printf("  Storage at 0x00..00: ");
         for (i = 0; i < sizeof(storage_value.bytes) / sizeof(storage_value.bytes[0]); i++)
             printf("%02x", storage_value.bytes[i]);

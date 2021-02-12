@@ -157,7 +157,7 @@ public:
     }
 
     /// Get the account's storage value at the given key (EVMC Host method).
-    bytes32 get_storage(const address& addr, const bytes32& key) const noexcept override
+    bytes32 get_storage(const address& addr, const bytes32& key, bool*) const noexcept override
     {
         record_account_access(addr);
 

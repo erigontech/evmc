@@ -425,7 +425,7 @@ public:
     virtual bool account_exists(const address& addr) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::get_storage
-    virtual bytes32 get_storage(const address& addr, const bytes32& key) const noexcept = 0;
+    virtual bytes32 get_storage(const address& addr, const bytes32& key, bool* warm_read) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::set_storage
     virtual evmc_storage_status set_storage(const address& addr,
@@ -493,9 +493,9 @@ public:
         return host->account_exists(context, &address);
     }
 
-    bytes32 get_storage(const address& address, const bytes32& key) const noexcept final
+    bytes32 get_storage(const address& address, const bytes32& key, bool* warm_read) const noexcept final
     {
-        return host->get_storage(context, &address, &key);
+        return host->get_storage(context, &address, &key, warm_read);
     }
 
     evmc_storage_status set_storage(const address& address,
@@ -736,9 +736,10 @@ inline bool account_exists(evmc_host_context* h, const evmc_address* addr) noexc
 
 inline evmc_bytes32 get_storage(evmc_host_context* h,
                                 const evmc_address* addr,
-                                const evmc_bytes32* key) noexcept
+                                const evmc_bytes32* key,
+                                bool* warm_read) noexcept
 {
-    return Host::from_context(h)->get_storage(*addr, *key);
+    return Host::from_context(h)->get_storage(*addr, *key, warm_read);
 }
 
 inline evmc_storage_status set_storage(evmc_host_context* h,

@@ -22,7 +22,7 @@ class NullHost : public evmc::Host
 public:
     bool account_exists(const evmc::address&) const noexcept final { return false; }
 
-    evmc::bytes32 get_storage(const evmc::address&, const evmc::bytes32&) const noexcept final
+    evmc::bytes32 get_storage(const evmc::address&, const evmc::bytes32&, bool*) const noexcept final
     {
         return {};
     }
@@ -597,7 +597,7 @@ TEST(cpp, host)
 
     EXPECT_EQ(host.set_storage(a, {}, v), EVMC_STORAGE_MODIFIED);
     EXPECT_EQ(host.set_storage(a, {}, v), EVMC_STORAGE_UNCHANGED);
-    EXPECT_EQ(host.get_storage(a, {}), v);
+    EXPECT_EQ(host.get_storage(a, {}, nullptr), v);
 
     EXPECT_TRUE(evmc::is_zero(host.get_balance(a)));
 
