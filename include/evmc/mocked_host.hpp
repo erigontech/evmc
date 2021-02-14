@@ -157,8 +157,7 @@ public:
     }
 
     /// Access the account's storage value at the given key (EIP-2929).
-    evmc_access_status access_storage(const address& addr,
-                                      const bytes32& key) const noexcept override
+    evmc_access_status access_storage(const address&, const bytes32&) const noexcept override
     {
         return EVMC_COLD_ACCESS;
     }

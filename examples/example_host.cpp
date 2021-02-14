@@ -58,6 +58,12 @@ public:
         return accounts.find(addr) != accounts.end();
     }
 
+    evmc_access_status access_storage(const evmc::address&,
+                                      const evmc::bytes32&) const noexcept final
+    {
+        return EVMC_COLD_ACCESS;
+    }
+
     evmc::bytes32 get_storage(const evmc::address& addr,
                               const evmc::bytes32& key) const noexcept final
     {
