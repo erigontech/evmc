@@ -424,16 +424,17 @@ public:
     /// @copydoc evmc_host_interface::account_exists
     virtual bool account_exists(const address& addr) const noexcept = 0;
 
+    /// @copydoc evmc_host_interface::access_storage
+    virtual evmc_access_status access_storage(const address& addr,
+                                              const bytes32& key) const noexcept = 0;
+
     /// @copydoc evmc_host_interface::get_storage
-    virtual bytes32 get_storage(const address& addr,
-                                const bytes32& key,
-                                bool* warm_read) const noexcept = 0;
+    virtual bytes32 get_storage(const address& addr, const bytes32& key) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::set_storage
     virtual evmc_storage_status set_storage(const address& addr,
                                             const bytes32& key,
-                                            const bytes32& value,
-                                            bool* warm_read) noexcept = 0;
+                                            const bytes32& value) noexcept = 0;
 
     /// @copydoc evmc_host_interface::get_balance
     virtual uint256be get_balance(const address& addr) const noexcept = 0;
@@ -496,19 +497,22 @@ public:
         return host->account_exists(context, &address);
     }
 
-    bytes32 get_storage(const address& address,
-                        const bytes32& key,
-                        bool* warm_read) const noexcept final
+    evmc_access_status access_storage(const address& address,
+                                      const bytes32& key) const noexcept final
     {
-        return host->get_storage(context, &address, &key, warm_read);
+        return host->access_storage(context, &address, &key);
+    }
+
+    bytes32 get_storage(const address& address, const bytes32& key) const noexcept final
+    {
+        return host->get_storage(context, &address, &key);
     }
 
     evmc_storage_status set_storage(const address& address,
                                     const bytes32& key,
-                                    const bytes32& value,
-                                    bool* warm_read) noexcept final
+                                    const bytes32& value) noexcept final
     {
-        return host->set_storage(context, &address, &key, &value, warm_read);
+        return host->set_storage(context, &address, &key, &value);
     }
 
     uint256be get_balance(const address& address) const noexcept final
@@ -740,21 +744,26 @@ inline bool account_exists(evmc_host_context* h, const evmc_address* addr) noexc
     return Host::from_context(h)->account_exists(*addr);
 }
 
+inline evmc_access_status access_storage(evmc_host_context* h,
+                                         const evmc_address* addr,
+                                         const evmc_bytes32* key) noexcept
+{
+    return Host::from_context(h)->access_storage(*addr, *key);
+}
+
 inline evmc_bytes32 get_storage(evmc_host_context* h,
                                 const evmc_address* addr,
-                                const evmc_bytes32* key,
-                                bool* warm_read) noexcept
+                                const evmc_bytes32* key) noexcept
 {
-    return Host::from_context(h)->get_storage(*addr, *key, warm_read);
+    return Host::from_context(h)->get_storage(*addr, *key);
 }
 
 inline evmc_storage_status set_storage(evmc_host_context* h,
                                        const evmc_address* addr,
                                        const evmc_bytes32* key,
-                                       const evmc_bytes32* value,
-                                       bool* warm_read) noexcept
+                                       const evmc_bytes32* value) noexcept
 {
-    return Host::from_context(h)->set_storage(*addr, *key, *value, warm_read);
+    return Host::from_context(h)->set_storage(*addr, *key, *value);
 }
 
 inline evmc_uint256be get_balance(evmc_host_context* h, const evmc_address* addr) noexcept
@@ -818,7 +827,8 @@ inline void emit_log(evmc_host_context* h,
 inline const evmc_host_interface& Host::get_interface() noexcept
 {
     static constexpr evmc_host_interface interface{
-        ::evmc::internal::account_exists, ::evmc::internal::get_storage,
+        ::evmc::internal::account_exists, ::evmc::internal::access_storage,
+        ::evmc::internal::get_storage,
         ::evmc::internal::set_storage,    ::evmc::internal::get_balance,
         ::evmc::internal::get_code_size,  ::evmc::internal::get_code_hash,
         ::evmc::internal::copy_code,      ::evmc::internal::selfdestruct,

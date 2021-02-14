@@ -242,7 +242,7 @@ evmc_result execute(evmc_vm* instance,
         case OP_SLOAD:
         {
             evmc_uint256be index = stack.pop();
-            evmc_uint256be value = host->get_storage(context, &msg->destination, &index, nullptr);
+            evmc_uint256be value = host->get_storage(context, &msg->destination, &index);
             stack.push(value);
             break;
         }
@@ -251,7 +251,7 @@ evmc_result execute(evmc_vm* instance,
         {
             evmc_uint256be index = stack.pop();
             evmc_uint256be value = stack.pop();
-            host->set_storage(context, &msg->destination, &index, &value, nullptr);
+            host->set_storage(context, &msg->destination, &index, &value);
             break;
         }
 

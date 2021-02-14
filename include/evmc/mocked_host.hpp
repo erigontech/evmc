@@ -156,8 +156,15 @@ public:
         return accounts.count(addr) != 0;
     }
 
+    /// Access the account's storage value at the given key (EIP-2929).
+    evmc_access_status access_storage(const address& addr,
+                                      const bytes32& key) const noexcept override
+    {
+        return EVMC_COLD_ACCESS;
+    }
+
     /// Get the account's storage value at the given key (EVMC Host method).
-    bytes32 get_storage(const address& addr, const bytes32& key, bool*) const noexcept override
+    bytes32 get_storage(const address& addr, const bytes32& key) const noexcept override
     {
         record_account_access(addr);
 
@@ -174,8 +181,7 @@ public:
     /// Set the account's storage value (EVMC Host method).
     evmc_storage_status set_storage(const address& addr,
                                     const bytes32& key,
-                                    const bytes32& value,
-                                    bool*) noexcept override
+                                    const bytes32& value) noexcept override
     {
         record_account_access(addr);
         const auto it = accounts.find(addr);

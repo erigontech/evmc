@@ -433,21 +433,51 @@ typedef bool (*evmc_account_exists_fn)(struct evmc_host_context* context,
                                        const evmc_address* address);
 
 /**
+ * Access status per EIP-2929: Gas cost increases for state access opcodes.
+ */
+enum evmc_access_status
+{
+    /**
+     * The value hasn't been accessed before – it's the first access.
+     */
+    EVMC_COLD_ACCESS = 0,
+
+    /**
+     * The value is already in accessed_addresses or accessed_storage_keys.
+     */
+    EVMC_WARM_ACCESS = 1
+};
+
+/**
+ * Access storage callback function (EIP-2929).
+ *
+ * This callback function is used by a VM to add the given account storage entry
+ * to accessed_storage_keys substate (EIP-2929).
+ *
+ * @param context  The Host execution context.
+ * @param address  The address of the account.
+ * @param key      The index of the account's storage entry.
+ * @return         EVMC_WARM_ACCESS if accessed_storage_keys already contained the entry
+ *                 and EVMC_COLD_ACCESS otherwise.
+ */
+typedef evmc_access_status (*evmc_access_storage_fn)(struct evmc_host_context* context,
+                                                     const evmc_address* address,
+                                                     const evmc_bytes32* key);
+
+/**
  * Get storage callback function.
  *
  * This callback function is used by a VM to query the given account storage entry.
  *
- * @param context        The Host execution context.
- * @param address        The address of the account.
- * @param key            The index of the account's storage entry.
- * @param[out] warm_read Whether the storage read is warm in EIP-2929 terms.
- * @return               The storage value at the given storage key or null bytes
- *                       if the account does not exist.
+ * @param context  The Host execution context.
+ * @param address  The address of the account.
+ * @param key      The index of the account's storage entry.
+ * @return         The storage value at the given storage key or null bytes
+ *                 if the account does not exist.
  */
 typedef evmc_bytes32 (*evmc_get_storage_fn)(struct evmc_host_context* context,
                                             const evmc_address* address,
-                                            const evmc_bytes32* key,
-                                            bool* warm_read);
+                                            const evmc_bytes32* key);
 
 
 /**
@@ -498,18 +528,16 @@ enum evmc_storage_status
  * VM implementations only modify storage of the account of the current execution context
  * (i.e. referenced by evmc_message::destination).
  *
- * @param context        The pointer to the Host execution context.
- * @param address        The address of the account.
- * @param key            The index of the storage entry.
- * @param value          The value to be stored.
- * @param[out] warm_read Whether the storage read is warm in EIP-2929 terms.
- * @return               The effect on the storage item.
+ * @param context  The pointer to the Host execution context.
+ * @param address  The address of the account.
+ * @param key      The index of the storage entry.
+ * @param value    The value to be stored.
+ * @return         The effect on the storage item.
  */
 typedef enum evmc_storage_status (*evmc_set_storage_fn)(struct evmc_host_context* context,
                                                         const evmc_address* address,
                                                         const evmc_bytes32* key,
-                                                        const evmc_bytes32* value,
-                                                        bool* warm_read);
+                                                        const evmc_bytes32* value);
 
 /**
  * Get balance callback function.

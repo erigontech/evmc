@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning].
 ### Added
 
 - Support for **Berlin** [EIP-2929](https://eips.ethereum.org/EIPS/eip-2929). 
-  `warm_read` output parameter added to `evmc_get_storage_fn` & `evmc_set_storage_fn` functions.
+  `evmc_access_storage_fn` function.
 
 ## [7.4.0] — 2020-06-24
 
