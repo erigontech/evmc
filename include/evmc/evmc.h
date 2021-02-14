@@ -658,6 +658,9 @@ struct evmc_host_interface
     /** Check account existence callback function. */
     evmc_account_exists_fn account_exists;
 
+    /** Access storage callback function (EIP-2929). */
+    evmc_access_storage_fn access_storage;
+
     /** Get storage callback function. */
     evmc_get_storage_fn get_storage;
 

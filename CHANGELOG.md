@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning].
 ### Added
 
 - Support for **Berlin** [EIP-2929](https://eips.ethereum.org/EIPS/eip-2929). 
-  `evmc_access_storage_fn` function.
+  `access_storage` function added to `evmc_host_interface`.
 
 ## [7.4.0] — 2020-06-24
 
