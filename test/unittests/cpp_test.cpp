@@ -22,6 +22,11 @@ class NullHost : public evmc::Host
 public:
     bool account_exists(const evmc::address&) const noexcept final { return false; }
 
+    evmc_access_status access_account(const evmc::address&) const noexcept final
+    {
+        return EVMC_COLD_ACCESS;
+    }
+
     evmc_access_status access_storage(const evmc::address&,
                                       const evmc::bytes32&) const noexcept final
     {

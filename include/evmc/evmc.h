@@ -438,15 +438,29 @@ typedef bool (*evmc_account_exists_fn)(struct evmc_host_context* context,
 enum evmc_access_status
 {
     /**
-     * The value hasn't been accessed before – it's the first access.
+     * The entry hasn't been accessed before – it's the first access.
      */
     EVMC_COLD_ACCESS = 0,
 
     /**
-     * The value is already in accessed_addresses or accessed_storage_keys.
+     * The entry is already in accessed_addresses or accessed_storage_keys.
      */
     EVMC_WARM_ACCESS = 1
 };
+
+/**
+ * Access account callback function (EIP-2929).
+ *
+ * This callback function is used by a VM to add the given address
+ * to accessed_addresses substate (EIP-2929).
+ *
+ * @param context  The pointer to the Host execution context.
+ * @param address  The address of the account.
+ * @return         EVMC_WARM_ACCESS if accessed_addresses already contained the address
+ *                 and EVMC_COLD_ACCESS otherwise.
+ */
+typedef enum evmc_access_status (*evmc_access_account_fn)(struct evmc_host_context* context,
+                                                          const evmc_address* address);
 
 /**
  * Access storage callback function (EIP-2929).
@@ -657,6 +671,9 @@ struct evmc_host_interface
 {
     /** Check account existence callback function. */
     evmc_account_exists_fn account_exists;
+
+    /** Access account callback function (EIP-2929). */
+    evmc_access_account_fn access_account;
 
     /** Access storage callback function (EIP-2929). */
     evmc_access_storage_fn access_storage;

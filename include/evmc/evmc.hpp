@@ -424,6 +424,9 @@ public:
     /// @copydoc evmc_host_interface::account_exists
     virtual bool account_exists(const address& addr) const noexcept = 0;
 
+    /// @copydoc evmc_host_interface::access_account
+    virtual evmc_access_status access_account(const address& addr) const noexcept = 0;
+
     /// @copydoc evmc_host_interface::access_storage
     virtual evmc_access_status access_storage(const address& addr,
                                               const bytes32& key) const noexcept = 0;
@@ -495,6 +498,11 @@ public:
     bool account_exists(const address& address) const noexcept final
     {
         return host->account_exists(context, &address);
+    }
+
+    evmc_access_status access_account(const address& address) const noexcept final
+    {
+        return host->access_account(context, &address);
     }
 
     evmc_access_status access_storage(const address& address,
@@ -744,6 +752,11 @@ inline bool account_exists(evmc_host_context* h, const evmc_address* addr) noexc
     return Host::from_context(h)->account_exists(*addr);
 }
 
+inline evmc_access_status access_account(evmc_host_context* h, const evmc_address* addr) noexcept
+{
+    return Host::from_context(h)->access_account(*addr);
+}
+
 inline evmc_access_status access_storage(evmc_host_context* h,
                                          const evmc_address* addr,
                                          const evmc_bytes32* key) noexcept
@@ -827,8 +840,8 @@ inline void emit_log(evmc_host_context* h,
 inline const evmc_host_interface& Host::get_interface() noexcept
 {
     static constexpr evmc_host_interface interface{
-        ::evmc::internal::account_exists, ::evmc::internal::access_storage,
-        ::evmc::internal::get_storage,
+        ::evmc::internal::account_exists, ::evmc::internal::access_account,
+        ::evmc::internal::access_storage, ::evmc::internal::get_storage,
         ::evmc::internal::set_storage,    ::evmc::internal::get_balance,
         ::evmc::internal::get_code_size,  ::evmc::internal::get_code_hash,
         ::evmc::internal::copy_code,      ::evmc::internal::selfdestruct,
