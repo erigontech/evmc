@@ -26,6 +26,13 @@ const (
 	Create2      CallKind = C.EVMC_CREATE2
 )
 
+type AccessStatus int
+
+const (
+	ColdAccess AccessStatus = C.EVMC_COLD_ACCESS
+	WarmAccess AccessStatus = C.EVMC_WARM_ACCESS
+)
+
 type StorageStatus int
 
 const (
@@ -73,6 +80,8 @@ type TxContext struct {
 
 type HostContext interface {
 	AccountExists(addr Address) bool
+	AccessAccount(addr Address) AccessStatus
+	AccessStorage(addr Address, key Hash) AccessStatus
 	GetStorage(addr Address, key Hash) Hash
 	SetStorage(addr Address, key Hash, value Hash) StorageStatus
 	GetBalance(addr Address) Hash
@@ -92,6 +101,18 @@ type HostContext interface {
 func accountExists(pCtx unsafe.Pointer, pAddr *C.evmc_address) C.bool {
 	ctx := getHostContext(uintptr(pCtx))
 	return C.bool(ctx.AccountExists(goAddress(*pAddr)))
+}
+
+//export accessAccount
+func accessAccount(pCtx unsafe.Pointer, pAddr *C.evmc_address) C.enum_evmc_access_status {
+	ctx := getHostContext(uintptr(pCtx))
+	return C.enum_evmc_access_status(ctx.AccessAccount(goAddress(*pAddr)))
+}
+
+//export accessStorage
+func accessStorage(pCtx unsafe.Pointer, pAddr *C.evmc_address, pKey *C.evmc_bytes32) C.enum_evmc_access_status {
+	ctx := getHostContext(uintptr(pCtx))
+	return C.enum_evmc_access_status(ctx.AccessStorage(goAddress(*pAddr), goHash(*pKey)))
 }
 
 //export getStorage

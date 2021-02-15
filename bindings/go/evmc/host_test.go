@@ -15,6 +15,14 @@ func (host *testHostContext) AccountExists(addr Address) bool {
 	return false
 }
 
+func (host *testHostContext) AccessAccount(addr Address) AccessStatus {
+	return ColdAccess
+}
+
+func (host *testHostContext) AccessStorage(addr Address, key Hash) AccessStatus {
+	return ColdAccess
+}
+
 func (host *testHostContext) GetStorage(addr Address, key Hash) Hash {
 	return Hash{}
 }

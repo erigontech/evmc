@@ -28,6 +28,16 @@ final class Host {
     return context.accountExists(address);
   }
 
+  /** Access account callback function. */
+  static int access_account(HostContext context, byte[] address) {
+    return context.accessAccount(address);
+  }
+
+  /** Access storage callback function. */
+  static int access_storage(HostContext context, byte[] address, byte[] key) {
+    return context.accessStorage(address, key);
+  }
+
   /** Get storage callback function. */
   static ByteBuffer get_storage(HostContext context, byte[] address, byte[] key) {
     return ensureDirectBuffer(context.getStorage(address, key));

@@ -15,6 +15,8 @@
  */
 const struct evmc_host_interface evmc_go_host = {
     (evmc_account_exists_fn)accountExists,
+    (evmc_access_account_fn)accessAccount,
+    (evmc_access_storage_fn)accessStorage,
     (evmc_get_storage_fn)getStorage,
     (evmc_set_storage_fn)setStorage,
     (evmc_get_balance_fn)getBalance,
@@ -46,6 +48,8 @@ static inline void go_exported_functions_type_checks()
     (void)tx_context;
     struct evmc_result result;
     (void)result;
+    enum evmc_access_status access_status;
+    (void)access_status;
     enum evmc_storage_status storage_status;
     (void)storage_status;
     bool bool_flag;
@@ -54,6 +58,14 @@ static inline void go_exported_functions_type_checks()
     evmc_account_exists_fn account_exists_fn = NULL;
     bool_flag = account_exists_fn(context, address);
     bool_flag = accountExists(context, address);
+
+    evmc_access_account_fn access_account_fn = NULL;
+    access_status = access_account_fn(context, address);
+    access_status = accessAccount(context, address);
+
+    evmc_access_storage_fn access_storage_fn = NULL;
+    access_status = access_storage_fn(context, address, &bytes32);
+    access_status = accessStorage(context, address, &bytes3);
 
     evmc_get_storage_fn get_storage_fn = NULL;
     bytes32 = get_storage_fn(context, address, &bytes32);

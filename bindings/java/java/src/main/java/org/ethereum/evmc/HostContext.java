@@ -21,6 +21,29 @@ public interface HostContext {
   boolean accountExists(byte[] address);
 
   /**
+   * Access account function (EIP-2929).
+   *
+   * <p>This function is used by the VM to add the given address
+   * to accessed_addresses substate (EIP-2929).
+   *
+   * @param address The address of the account.
+   * @return 0 if cold access, 1 if warm access.
+   */
+  int accessAccount(byte[] address);
+
+  /**
+   * Access storage function (EIP-2929).
+   *
+   * <p>This function is used by the VM to add the given account storage entry
+   * to accessed_storage_keys substate (EIP-2929).
+   *
+   * @param address The address of the account.
+   * @param key The index of the account's storage entry.
+   * @return 0 if cold access, 1 if warm access.
+   */
+  int accessStorage(byte[] address, byte[] key);
+
+  /**
    * Get storage function.
    *
    * <p>This function is used by a VM to query the given account storage entry.
