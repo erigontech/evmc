@@ -65,7 +65,7 @@ static inline void go_exported_functions_type_checks()
 
     evmc_access_storage_fn access_storage_fn = NULL;
     access_status = access_storage_fn(context, address, &bytes32);
-    access_status = accessStorage(context, address, &bytes3);
+    access_status = accessStorage(context, address, &bytes32);
 
     evmc_get_storage_fn get_storage_fn = NULL;
     bytes32 = get_storage_fn(context, address, &bytes32);
