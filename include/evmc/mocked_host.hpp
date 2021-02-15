@@ -157,13 +157,10 @@ public:
     }
 
     /// Access an account (EIP-2929).
-    evmc_access_status access_account(const address&) const noexcept override
-    {
-        return EVMC_COLD_ACCESS;
-    }
+    evmc_access_status access_account(const address&) noexcept override { return EVMC_COLD_ACCESS; }
 
     /// Access the account's storage value at the given key (EIP-2929).
-    evmc_access_status access_storage(const address&, const bytes32&) const noexcept override
+    evmc_access_status access_storage(const address&, const bytes32&) noexcept override
     {
         return EVMC_COLD_ACCESS;
     }

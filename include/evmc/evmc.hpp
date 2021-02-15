@@ -425,11 +425,10 @@ public:
     virtual bool account_exists(const address& addr) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::access_account
-    virtual evmc_access_status access_account(const address& addr) const noexcept = 0;
+    virtual evmc_access_status access_account(const address& addr) noexcept = 0;
 
     /// @copydoc evmc_host_interface::access_storage
-    virtual evmc_access_status access_storage(const address& addr, const bytes32& key) const
-        noexcept = 0;
+    virtual evmc_access_status access_storage(const address& addr, const bytes32& key) noexcept = 0;
 
     /// @copydoc evmc_host_interface::get_storage
     virtual bytes32 get_storage(const address& addr, const bytes32& key) const noexcept = 0;
@@ -500,13 +499,12 @@ public:
         return host->account_exists(context, &address);
     }
 
-    evmc_access_status access_account(const address& address) const noexcept final
+    evmc_access_status access_account(const address& address) noexcept final
     {
         return host->access_account(context, &address);
     }
 
-    evmc_access_status access_storage(const address& address, const bytes32& key) const
-        noexcept final
+    evmc_access_status access_storage(const address& address, const bytes32& key) noexcept final
     {
         return host->access_storage(context, &address, &key);
     }
