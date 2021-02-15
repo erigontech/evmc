@@ -63,14 +63,14 @@ public:
         return EVMC_COLD_ACCESS;
     }
 
-    evmc_access_status access_storage(const evmc::address&,
-                                      const evmc::bytes32&) const noexcept final
+    evmc_access_status access_storage(const evmc::address&, const evmc::bytes32&) const
+        noexcept final
     {
         return EVMC_COLD_ACCESS;
     }
 
-    evmc::bytes32 get_storage(const evmc::address& addr,
-                              const evmc::bytes32& key) const noexcept final
+    evmc::bytes32 get_storage(const evmc::address& addr, const evmc::bytes32& key) const
+        noexcept final
     {
         const auto account_iter = accounts.find(addr);
         if (account_iter == accounts.end())

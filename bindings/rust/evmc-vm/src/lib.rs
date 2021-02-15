@@ -224,7 +224,7 @@ impl<'a> ExecutionContext<'a> {
             (*self.host).access_account.unwrap()(self.context, address as *const Address)
         }
     }
-    
+
     /// Access a storage key (EIP-2929).
     pub fn access_storage(&mut self, address: &Address, key: &Bytes32) -> AccessStatus {
         unsafe {

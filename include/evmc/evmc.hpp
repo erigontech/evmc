@@ -428,8 +428,8 @@ public:
     virtual evmc_access_status access_account(const address& addr) const noexcept = 0;
 
     /// @copydoc evmc_host_interface::access_storage
-    virtual evmc_access_status access_storage(const address& addr,
-                                              const bytes32& key) const noexcept = 0;
+    virtual evmc_access_status access_storage(const address& addr, const bytes32& key) const
+        noexcept = 0;
 
     /// @copydoc evmc_host_interface::get_storage
     virtual bytes32 get_storage(const address& addr, const bytes32& key) const noexcept = 0;
@@ -505,8 +505,8 @@ public:
         return host->access_account(context, &address);
     }
 
-    evmc_access_status access_storage(const address& address,
-                                      const bytes32& key) const noexcept final
+    evmc_access_status access_storage(const address& address, const bytes32& key) const
+        noexcept final
     {
         return host->access_storage(context, &address, &key);
     }
