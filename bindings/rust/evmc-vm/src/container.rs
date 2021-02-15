@@ -126,6 +126,8 @@ mod tests {
 
         let host = ::evmc_sys::evmc_host_interface {
             account_exists: None,
+            access_account: None,
+            access_storage: None,
             get_storage: None,
             set_storage: None,
             get_balance: None,
