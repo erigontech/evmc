@@ -27,8 +27,8 @@ public:
         return EVMC_COLD_ACCESS;
     }
 
-    evmc_access_status access_storage(const evmc::address&,
-                                      const evmc::bytes32&) const noexcept final
+    evmc_access_status access_storage(const evmc::address&, const evmc::bytes32&) const
+        noexcept final
     {
         return EVMC_COLD_ACCESS;
     }
