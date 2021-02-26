@@ -298,6 +298,9 @@ TEST(instructions, berlin_hard_fork)
     {
         switch (op)
         {
+        case OP_BEGINSUB:
+        case OP_JUMPSUB:
+        case OP_RETURNSUB:
         case OP_EXTCODESIZE:
         case OP_EXTCODECOPY:
         case OP_EXTCODEHASH:
@@ -314,6 +317,28 @@ TEST(instructions, berlin_hard_fork)
             break;
         }
     }
+
+    EXPECT_EQ(b[OP_BEGINSUB].gas_cost, 2);
+    EXPECT_EQ(b[OP_BEGINSUB].stack_height_required, 0);
+    EXPECT_EQ(b[OP_BEGINSUB].stack_height_change, 0);
+    EXPECT_EQ(i[OP_BEGINSUB].gas_cost, 0);
+    EXPECT_EQ(bn[OP_BEGINSUB], std::string{"BEGINSUB"});
+    EXPECT_TRUE(in[OP_BEGINSUB] == nullptr);
+
+    EXPECT_EQ(b[OP_JUMPSUB].gas_cost, 10);
+    EXPECT_EQ(b[OP_JUMPSUB].stack_height_required, 1);
+    EXPECT_EQ(b[OP_JUMPSUB].stack_height_change, -1);
+    EXPECT_EQ(i[OP_JUMPSUB].gas_cost, 0);
+    EXPECT_EQ(bn[OP_JUMPSUB], std::string{"JUMPSUB"});
+    EXPECT_TRUE(in[OP_JUMPSUB] == nullptr);
+
+    EXPECT_EQ(b[OP_RETURNSUB].gas_cost, 5);
+    EXPECT_EQ(b[OP_RETURNSUB].stack_height_required, 0);
+    EXPECT_EQ(b[OP_RETURNSUB].stack_height_change, 0);
+    EXPECT_EQ(i[OP_RETURNSUB].gas_cost, 0);
+    EXPECT_EQ(bn[OP_RETURNSUB], std::string{"RETURNSUB"});
+    EXPECT_TRUE(in[OP_RETURNSUB] == nullptr);
+
 
     // EIP-2929 WARM_STORAGE_READ_COST
     EXPECT_EQ(b[OP_EXTCODESIZE].gas_cost, 100);
