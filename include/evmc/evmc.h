@@ -120,6 +120,11 @@ struct evmc_message
     int64_t gas;
 
     /**
+     * The amount of gas cost for the call.
+     */
+    int64_t gas_cost;
+
+    /**
      * The recipient of the message.
      *
      * This is the address of the account which storage/balance/nonce is going to be modified
@@ -432,6 +437,11 @@ struct evmc_result
      * If evmc_result::status_code is other than ::EVMC_SUCCESS the value MUST be 0.
      */
     int64_t gas_refund;
+
+    /**
+     * The ga cost for the execution.
+     */
+    int64_t gas_cost;
 
     /**
      * The reference to output data.

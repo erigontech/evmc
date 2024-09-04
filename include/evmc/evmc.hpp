@@ -348,9 +348,10 @@ public:
     explicit Result(evmc_status_code _status_code,
                     int64_t _gas_left,
                     int64_t _gas_refund,
+                    int64_t _gas_cost,
                     const uint8_t* _output_data,
                     size_t _output_size) noexcept
-      : evmc_result{make_result(_status_code, _gas_left, _gas_refund, _output_data, _output_size)}
+      : evmc_result{make_result(_status_code, _gas_left, _gas_refund, _gas_cost, _output_data, _output_size)}
     {}
 
     /// Creates the result without output.
@@ -360,8 +361,9 @@ public:
     /// @param _gas_refund   The amount of refunded gas.
     explicit Result(evmc_status_code _status_code = EVMC_INTERNAL_ERROR,
                     int64_t _gas_left = 0,
-                    int64_t _gas_refund = 0) noexcept
-      : evmc_result{make_result(_status_code, _gas_left, _gas_refund, nullptr, 0)}
+                    int64_t _gas_refund = 0,
+                    int64_t _gas_cost = 0) noexcept
+      : evmc_result{make_result(_status_code, _gas_left, _gas_refund, _gas_cost, nullptr, 0)}
     {}
 
     /// Creates the result of contract creation.
@@ -373,8 +375,9 @@ public:
     explicit Result(evmc_status_code _status_code,
                     int64_t _gas_left,
                     int64_t _gas_refund,
+                    int64_t _gas_cost,
                     const evmc_address& _create_address) noexcept
-      : evmc_result{make_result(_status_code, _gas_left, _gas_refund, nullptr, 0)}
+      : evmc_result{make_result(_status_code, _gas_left, _gas_refund, _gas_cost, nullptr, 0)}
     {
         create_address = _create_address;
     }
